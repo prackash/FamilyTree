@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Alice",
+        "relationship": "child",
+        "childrenNames": []
+    },
+    {
+        "name": "Bob",
+        "relationship": "child",
+        "childrenNames": []
+    },
+    {
+        "name": "John Doe",
+        "relationship": "parent",
+        "childrenNames": ["Alice", "Bob"]
+    }
+]

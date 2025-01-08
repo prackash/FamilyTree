@@ -18,8 +18,8 @@
         #controls {
             margin: 20px 0;
         }
-        button {
-            margin-right: 10px;
+        button, input, select {
+            margin: 5px;
         }
     </style>
 </head>
@@ -28,6 +28,35 @@
     <div id="controls">
         <input type="file" id="file-input" accept=".json">
         <button id="download-json">Download Updated JSON</button>
+        
+        <form id="add-node-form">
+            <h3>Add Node</h3>
+            <label for="parent-node">Parent Node Name:</label>
+            <input type="text" id="parent-node" required>
+            <label for="new-node-name">New Node Name:</label>
+            <input type="text" id="new-node-name" required>
+            <label for="relationship">Relationship:</label>
+            <input type="text" id="relationship" required>
+            <button type="submit">Add Node</button>
+        </form>
+        
+        <form id="edit-node-form">
+            <h3>Edit Node</h3>
+            <label for="edit-node-name">Node Name to Edit:</label>
+            <input type="text" id="edit-node-name" required>
+            <label for="new-name">New Name:</label>
+            <input type="text" id="new-name" required>
+            <label for="new-relationship">New Relationship:</label>
+            <input type="text" id="new-relationship" required>
+            <button type="submit">Edit Node</button>
+        </form>
+        
+        <form id="delete-node-form">
+            <h3>Delete Node</h3>
+            <label for="delete-node-name">Node Name to Delete:</label>
+            <input type="text" id="delete-node-name" required>
+            <button type="submit">Delete Node</button>
+        </form>
     </div>
     <div id="tree-container"></div>
     
@@ -84,6 +113,28 @@
                 .text(d => d.data.name);
         }
 
+        function findNodeByName(node, name) {
+            if (node.name === name) return node;
+            if (!node.children) return null;
+            for (const child of node.children) {
+                const result = findNodeByName(child, name);
+                if (result) return result;
+            }
+            return null;
+        }
+
+        function deleteNode(parent, nodeName) {
+            if (!parent.children) return false;
+            for (let i = 0; i < parent.children.length; i++) {
+                if (parent.children[i].name === nodeName) {
+                    parent.children.splice(i, 1);
+                    return true;
+                }
+                if (deleteNode(parent.children[i], nodeName)) return true;
+            }
+            return false;
+        }
+
         document.getElementById("file-input").addEventListener("change", function(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -100,6 +151,68 @@
             downloadLink.href = URL.createObjectURL(jsonBlob);
             downloadLink.download = "updated_tree.json";
             downloadLink.click();
+        });
+
+        document.getElementById("add-node-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const parentName = document.getElementById("parent-node").value;
+            const newNodeName = document.getElementById("new-node-name").value;
+            const relationship = document.getElementById("relationship").value;
+
+            const parentNode = findNodeByName(treeData, parentName);
+            if (!parentNode) {
+                alert("Parent node not found!");
+                return;
+            }
+
+            if (!parentNode.children) parentNode.children = [];
+            parentNode.children.push({ name: newNodeName, relationship });
+
+            updateTree(treeData);
+            alert(`Node "${newNodeName}" added.`);
+            event.target.reset();
+        });
+
+        document.getElementById("edit-node-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const nodeName = document.getElementById("edit-node-name").value;
+            const newName = document.getElementById("new-name").value;
+            const newRelationship = document.getElementById("new-relationship").value;
+
+            const node = findNodeByName(treeData, nodeName);
+            if (!node) {
+                alert("Node not found!");
+                return;
+            }
+
+            node.name = newName;
+            node.relationship = newRelationship;
+
+            updateTree(treeData);
+            alert(`Node "${nodeName}" updated.`);
+            event.target.reset();
+        });
+
+        document.getElementById("delete-node-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const nodeName = document.getElementById("delete-node-name").value;
+
+            if (treeData.name === nodeName) {
+                alert("Cannot delete the root node!");
+                return;
+            }
+
+            if (deleteNode(treeData, nodeName)) {
+                updateTree(treeData);
+                alert(`Node "${nodeName}" deleted.`);
+            } else {
+                alert("Node not found!");
+            }
+
+            event.target.reset();
         });
     </script>
 </body>
